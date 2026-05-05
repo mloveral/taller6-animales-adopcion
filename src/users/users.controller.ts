@@ -7,14 +7,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Crear un nuevo usuario' })
+  @ApiOperation({ summary: 'Crear un usuario' })
+  @ApiResponse({ status: 201, description: 'Usuario creado' })
+  @ApiResponse({ status: 409, description: 'Email ya registrado' })
   @ApiBody({ type: CreateUserDto })
-  @ApiResponse({ status: 201, description: 'Usuario creado exitosamente' })
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }
@@ -27,9 +26,9 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener un usuario por ID' })
-  @ApiParam({ name: 'id', type: 'string', format: 'uuid', description: 'ID del usuario' })
-  @ApiResponse({ status: 200, description: 'Usuario encontrado' })
+  @ApiOperation({ summary: 'Crear un usuario' })
+  @ApiResponse({ status: 201, description: 'Usuario creado' })
+  @ApiResponse({ status: 409, description: 'Email ya registrado' })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.findOne(id);
   }

@@ -1,8 +1,7 @@
 import { Controller, Post } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SeederService } from './seeder.service';
 
-@ApiTags('seeder')
 @Controller('seeder')
 export class SeederController {
   constructor(private readonly seederService: SeederService) {}

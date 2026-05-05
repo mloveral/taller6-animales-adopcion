@@ -1,22 +1,17 @@
-import { NestFactory }                  from '@nestjs/core';
-import { ValidationPipe, Logger }       from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { AppModule }                    from './app.module';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app    = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
   app.setGlobalPrefix('api');
 
-  app.use((req, res, next) => {
-    logger.log(`${req.method} ${req.originalUrl ?? req.url}`);
-    next();
-  });
-
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist:            true,
+      whitelist: true,
       forbidNonWhitelisted: true,
     }),
   );
@@ -25,21 +20,25 @@ async function bootstrap() {
 
   // Configuración de Swagger
   const config = new DocumentBuilder()
-    .setTitle('API Adopción de Animales')
+    .setTitle('API Adopciones')
     .setDescription('API para la gestión de adopción de animales')
+    .addBearerAuth()
+    .addServer('http://localhost:3000', 'local')
+    .addServer('https://api.miapp.com', 'Producción')
     .setVersion('1.0')
     .addTag('animals', 'Endpoints para gestionar animales')
-    .addTag('locations', 'Endpoints para gestionar ubicaciones')
     .addTag('users', 'Endpoints para gestionar usuarios')
-    .addTag('favorites', 'Endpoints para gestionar favoritos')
-    .addTag('seeder', 'Endpoints para poblar la base de datos')
+    .addTag(
+      'adoption-requests',
+      'Endpoints para gestionar solicitudes de adopción',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
-  logger.log(`Servidor en http://localhost:${port}/api`);
-  logger.log(`Swagger en http://localhost:${port}/api/docs`);
+  logger.log(`Servidor en http://localhost:${port}`);
+  logger.log(`Swagger en http://localhost:${port}/docs`);
 }
 bootstrap();

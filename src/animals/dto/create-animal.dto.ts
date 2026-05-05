@@ -21,30 +21,48 @@ export class CreateAnimalDto {
 
   @IsString()
   @MinLength(10)
-  @ApiProperty({ example: 'Labrador dorada, cariñosa y muy activa', description: 'Descripción del animal' })
+  @ApiProperty({
+    example: 'Labrador dorada, cariñosa y muy activa',
+    description: 'Descripción del animal',
+  })
   descripcion: string;
 
   @IsOptional()
   @IsIn(['disponible', 'adoptado'])
-  @ApiPropertyOptional({ example: 'disponible', description: 'Estado del animal' })
+  @ApiPropertyOptional({
+    example: 'disponible',
+    description: 'Estado del animal',
+  })
   estado?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ example: 'https://ejemplo.com/imagen.jpg', description: 'URL de la imagen del animal' })
+  @ApiPropertyOptional({
+    example: 'https://ejemplo.com/imagen.jpg',
+    description: 'URL de la imagen del animal',
+  })
   imagen?: string;
 
   @IsEmail()
-  @ApiProperty({ example: 'patitas@demo.com', description: 'Email de contacto' })
+  @ApiProperty({
+    example: 'patitas@demo.com',
+    description: 'Email de contacto',
+  })
   contacto: string;
 
   @IsOptional()
   @IsUUID()
-  @ApiPropertyOptional({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'ID de la ubicación' })
+  @ApiPropertyOptional({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'ID de la ubicación',
+  })
   locationId?: string;
 
   @IsOptional()
   @IsUUID()
-  @ApiPropertyOptional({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'ID del usuario que registra' })
+  @ApiPropertyOptional({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'ID del usuario que registra',
+  })
   registeredById?: string;
 }
