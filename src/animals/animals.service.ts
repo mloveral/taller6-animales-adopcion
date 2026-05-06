@@ -1,18 +1,21 @@
 import {
-  Injectable, NotFoundException,
-  BadRequestException, InternalServerErrorException, Logger,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository }       from 'typeorm';
-import { Animal }           from './entities/animal.entity';
-import { Location }         from '../locations/entities/location.entity';
-import { User }             from '../users/entities/user.entity';
-import { CreateAnimalDto }  from './dto/create-animal.dto';
-import { UpdateAnimalDto }  from './dto/update-animal.dto';
+import { Repository } from 'typeorm';
+import { Animal } from './entities/animal.entity';
+import { Location } from '../locations/entities/location.entity';
+import { User } from '../users/entities/user.entity';
+import { CreateAnimalDto } from './dto/create-animal.dto';
+import { UpdateAnimalDto } from './dto/update-animal.dto';
 import { QueryAnimalsDto } from './dto/query-animals.dto';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 @Injectable()
 export class AnimalsService {
-
   private readonly logger = new Logger('AnimalsService');
 
   constructor(
@@ -22,6 +25,7 @@ export class AnimalsService {
     private readonly locationRepo: Repository<Location>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async create(dto: CreateAnimalDto) {
@@ -36,43 +40,49 @@ export class AnimalsService {
 
     let registeredBy: User | null = null;
     if (registeredById) {
-      registeredBy = await this.userRepo.findOne({ where: { id: registeredById } });
+      registeredBy = await this.userRepo.findOne({
+        where: { id: registeredById },
+      });
       if (!registeredBy)
         throw new NotFoundException(`User ${registeredById} no encontrado`);
     }
 
     try {
-      const animal = this.animalRepo.create({ ...rest, location, registeredBy });
+      const animal = this.animalRepo.create({
+        ...rest,
+        location,
+        registeredBy,
+      });
       return await this.animalRepo.save(animal);
-    } catch (err) { this.handleError(err); }
+    } catch (err) {
+      this.handleError(err);
+    }
   }
 
-// ─── findAll resuelto: combina paginación + filtros ───────────────
+  // ─── findAll resuelto: combina paginación + filtros ───────────────
   async findAll(query: QueryAnimalsDto) {
-    const page  = query.page  ?? 1;
+    const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
     const [data, total] = await this.animalRepo.findAndCount({
       where: {
         ...(query.especie && { especie: query.especie }),
-        ...(query.estado  && { estado:  query.estado  }),
+        ...(query.estado && { estado: query.estado }),
       },
       relations: ['registeredBy'],
-      skip:  (page - 1) * limit,
-      take:  limit,
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     return { data, total, page, limit };
   }
-
 
   async findOne(id: string) {
     const animal = await this.animalRepo.findOne({
       where: { id },
       relations: ['registeredBy', 'interestedUsers'],
     });
-    if (!animal)
-      throw new NotFoundException(`Animal ${id} no encontrado`);
+    if (!animal) throw new NotFoundException(`Animal ${id} no encontrado`);
     return animal;
   }
 
@@ -81,7 +91,9 @@ export class AnimalsService {
     this.animalRepo.merge(animal, dto);
     try {
       return await this.animalRepo.save(animal);
-    } catch (err) { this.handleError(err); }
+    } catch (err) {
+      this.handleError(err);
+    }
   }
 
   async remove(id: string) {
@@ -91,9 +103,29 @@ export class AnimalsService {
   }
 
   private handleError(err: any) {
-    if (err.code === '23505')          // PG unique constraint
+    if (err.code === '23505')
+      // PG unique constraint
       throw new BadRequestException(`Valor duplicado: ${err.detail}`);
     this.logger.error(err);
-    throw new InternalServerErrorException('Error inesperado — revisa los logs');
+    throw new InternalServerErrorException(
+      'Error inesperado — revisa los logs',
+    );
+  }
+
+  async uploadImagen(id: string, file: Express.Multer.File): Promise<Animal> {
+    // 1. Verificar que el animal existe (lanza 404 si no)
+    await this.findOne(id);
+
+    // 2. Subir el buffer a Cloudinary y recibir la URL
+    const url = await this.cloudinaryService.uploadBuffer(
+      file.buffer,
+      'animales-adopcion',  // carpeta en tu cuenta Cloudinary
+    );
+
+    // 3. Guardar la URL en la columna "imagen"
+    await this.animalRepo.update(id, { imagen: url });
+
+    // 4. Retornar el animal actualizado
+    return this.findOne(id);
   }
 }

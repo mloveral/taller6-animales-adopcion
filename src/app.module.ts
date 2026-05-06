@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AnimalsModule } from './animals/animals.module';
 import { LocationsModule } from './locations/locations.module';
 import { UsersModule } from './users/users.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     SeederModule,
     AdoptionRequestsModule,
+    CloudinaryModule,
   ],
 })
 export class AppModule {}
